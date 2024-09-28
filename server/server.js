@@ -151,6 +151,7 @@ const ProjectSchema = new mongoose.Schema({
     P_CSB01: String,
     P_CSB02: String,
     P_CSB03: String,
+    P_CSB04: String,
     P_S1: String,
     P_S2: String,
     P_T: String,
@@ -162,8 +163,8 @@ const project = mongoose.model("Project", ProjectSchema);
 
 app.post("/Project", async (req, res) => {
     try {
-        const { P_name,P_details,P_status,P_CSB01,P_CSB02,P_CSB03,P_S1,P_S2,P_T,P_type, P_tool } = req.body;
-        const Projectna = new project({ P_name,P_details,P_status,P_CSB01,P_CSB02,P_CSB03,P_S1,P_S2,P_T,P_type, P_tool});
+        const { P_name,P_details,P_status,P_CSB01,P_CSB02,P_CSB03,P_CSB04,P_S1,P_S2,P_T,P_type, P_tool } = req.body;
+        const Projectna = new project({ P_name,P_details,P_status,P_CSB01,P_CSB02,P_CSB03,P_CSB04,P_S1,P_S2,P_T,P_type, P_tool});
         await Projectna.save();
         res.status(201).json(Projectna);
     } catch (err) {
@@ -213,6 +214,7 @@ app.delete('/Project/:id', async (req, res) => {
 });
 // -----------------------------------------------------------------
 
+
 // -----------------------------------------------------------------
 //Student
 
@@ -225,55 +227,66 @@ const StudentSchema = new mongoose.Schema({
     S_CSB01: String,
     S_CSB02: String,
     S_CSB03: String,
+    S_CSB04: String,
     S_year: String,
     S_match: String,
     S_T_SP1: String,
-    S_T_SP2: String
-
+    S_T_SP2: String,
 });
 
-const student = mongoose.model("students", StudentSchema);
+const Student = mongoose.model("students", StudentSchema);
 
+// GET: Retrieve all students
 app.get("/students", async (req, res) => {
     try {
-        const Studen = await student.find();
-        res.json(Studen);
+        const students = await Student.find();
+        res.json(students);
+    } catch (err) {
+        console.error("Error fetching students:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// POST: Create a new student
+app.post("/students", async (req, res) => {
+    try {
+        const { S_id, S_name, S_email, S_phone, S_project, S_CSB01, S_CSB02, S_CSB03,S_CSB04, S_year, S_match, S_T_SP1, S_T_SP2 } = req.body;
+        const newStudent = new Student({ S_id, S_name, S_email, S_phone, S_project, S_CSB01, S_CSB02, S_CSB03,S_CSB04, S_year, S_match, S_T_SP1, S_T_SP2 });
+        await newStudent.save();
+        res.status(201).json(newStudent);
     } catch (err) {
         console.error("Error adding student:", err);
         res.status(500).send("Internal Server Error");
     }
 });
 
-app.post("/students", async (req, res) => {
+// PUT: Update a student by ID
+app.put("/students/:id", async (req, res) => {
     try {
-        const { S_id,
-            S_name,
-            S_email,
-            S_phone,
-            S_project,
-            S_CSB01,
-            S_CSB02,
-            S_CSB03,
-            S_year,
-            S_match,
-            S_T_SP1,
-            S_T_SP2 } = req.body;
-        const students = new student({ S_id,
-            S_name,
-            S_email,
-            S_phone,
-            S_project,
-            S_CSB01,
-            S_CSB02,
-            S_CSB03,
-            S_year,
-            S_match,
-            S_T_SP1,
-            S_T_SP2 });
-        await students.save();
-        res.status(201).json(students);
+        const studentId = req.params.id;
+        const updateData = req.body;
+        const updatedStudent = await Student.findByIdAndUpdate(studentId, updateData, { new: true }); // { new: true } returns the updated document
+        if (!updatedStudent) {
+            return res.status(404).send("Student not found");
+        }
+        res.json(updatedStudent);
     } catch (err) {
-        console.error("Error adding subject:", err);
+        console.error("Error updating student:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// DELETE: Remove a student by ID
+app.delete("/students/:id", async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const deletedStudent = await Student.findByIdAndDelete(studentId);
+        if (!deletedStudent) {
+            return res.status(404).send("Student not found");
+        }
+        res.json({ message: "Student deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting student:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -368,3 +381,7 @@ app.post("/Exam", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
+
+// -----------------------------------------------------------------
+
+// schema ma sai eng 
