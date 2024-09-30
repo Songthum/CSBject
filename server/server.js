@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 // const fs = require("fs");
 
+const axios = require("axios");
+const FormData = require("form-data");
+
 const app = express();
 
 
@@ -291,6 +294,69 @@ app.delete("/students/:id", async (req, res) => {
     }
 });
 
+
+
+app.post("/auth/login", async (req, res) => {
+    let { username, password } = req.body;
+  
+    if (!username || !password) {
+      return res.status(400).json({ message: "Missing credentials" });
+    }
+  
+    try {
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("scopes", "student,personel");
+  
+      const headersConfig = {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+          Authorization: "Bearer nK6p0wT-8NVHUwB8p0e9QSYBSaIZGp9D",
+        },
+      };
+  
+      const response = await axios.post(
+        "https://api.account.kmutnb.ac.th/api/account-api/user-authen",
+        formData,
+        headersConfig
+      );
+      return res.json(response.data);
+    } catch (error) {
+      console.error("Error in login:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+
+app.post("/auth/info", async (req, res) => {
+  const { S_id } = req.body.replace("s", "");
+  if (!S_id) {
+    return res.status(400).json({ message: "Missing username" });
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("username", S_id);
+
+    const config = {
+      method: "post",
+      url: "https://account.kmutnb.ac.th/api/account-api/user-info",
+      headers: {
+        Authorization: "Bearer nK6p0wT-8NVHUwB8p0e9QSYBSaIZGp9D",
+      },
+      data: formData,
+    };
+
+    const response = await axios.request(config);
+    return res.json(response.data);
+  } catch (error) {
+    console.error("Error in getting user info:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
 // -----------------------------------------------------------------
 //Teacher
 
@@ -385,3 +451,118 @@ app.post("/Exam", async (req, res) => {
 // -----------------------------------------------------------------
 
 // schema ma sai eng 
+// -----------------------------------------------------------------
+// -----------------------------------------------------------------
+
+// Room
+const RoomSchema = new mongoose.Schema({
+    R_id: String,
+    R_name: String,
+    R_Date: String,
+    R_C: String,
+    R_T: [String],
+    R_P: [String],
+    R_Time: [String],
+});
+
+const Room = mongoose.model("Room", RoomSchema);
+
+// GET: Retrieve all students
+app.get("/Room", async (req, res) => {
+    try {
+        const Rooms = await Room.find();
+        res.json(Rooms);
+    } catch (err) {
+        console.error("Error fetching students:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
+app.post("/Room", async (req, res) => {
+    try {
+        const { R_id, R_name, R_Date,R_C, R_T,R_P,R_Time } = req.body;
+        const newRoom = new Room({ R_id, R_name, R_Date,R_C, R_T,R_P,R_Time });
+        await newRoom.save();
+        res.status(201).json(newRoom);
+    } catch (err) {
+        console.error("Error adding Room:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// PUT: Update a student by ID
+app.put("/Room/:id", async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const updateData = req.body;
+        const updatedRoom = await Room.findByIdAndUpdate(RoomId, updateData, { new: true }); // { new: true } returns the updated document
+        if (!updatedRoom) {
+            return res.status(404).send("Student not found");
+        }
+        res.json(updatedRoom);
+    } catch (err) {
+        console.error("Error updating student:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// DELETE: Remove a student by ID
+app.delete("/Room/:id", async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const deletedRoom = await Room.findByIdAndDelete(RoomId);
+        if (!deletedRoom) {
+            return res.status(404).send("Student not found");
+        }
+        res.json({ message: "Student deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting student:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// -----------------------------------------------------------------
+// -----------------------------------------------------------------
+
+// FilePDF
+const FilePDFSchema = new mongoose.Schema({
+    F_id: String,
+    F_name: String,
+    F_ST1: String,
+    F_ST2: String,
+    F_E: String,
+    F_T_1: String,
+    F_T_2: String,
+
+});
+
+const FilePDF = mongoose.model("FilePDF", FilePDFSchema);
+
+// GET: Retrieve all students
+app.get("/FilePDF", async (req, res) => {
+    try {
+        const FilePDFs = await FilePDF.find();
+        res.json(FilePDFs);
+    } catch (err) {
+        console.error("Error fetching students:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
+app.post("/FilePDF", async (req, res) => {
+    try {
+        const {  F_id,F_name,F_ST1,F_ST2,F_E,F_T_1,F_T_2, } = req.body;
+        const newFilePDF = new FilePDF({ F_id,F_name,F_ST1,F_ST2,F_E,F_T_1,F_T_2,});
+        await newFilePDF.save();
+        res.status(201).json(newFilePDF);
+    } catch (err) {
+        console.error("Error adding FilePDF:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
+// -----------------------------------------------------------------
+// -----------------------------------------------------------------
