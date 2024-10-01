@@ -235,7 +235,13 @@ const StudentSchema = new mongoose.Schema({
     S_match: String,
     S_T_SP1: String,
     S_T_SP2: String,
-});
+    S_status: Boolean,
+},
+{
+  timestamps: false,
+  versionKey: false,
+}
+);
 
 const Student = mongoose.model("students", StudentSchema);
 
@@ -250,18 +256,7 @@ app.get("/students", async (req, res) => {
     }
 });
 
-// POST: Create a new student
-app.post("/students", async (req, res) => {
-    try {
-        const { S_id, S_name, S_email, S_phone, S_project, S_CSB01, S_CSB02, S_CSB03,S_CSB04, S_year, S_match, S_T_SP1, S_T_SP2 } = req.body;
-        const newStudent = new Student({ S_id, S_name, S_email, S_phone, S_project, S_CSB01, S_CSB02, S_CSB03,S_CSB04, S_year, S_match, S_T_SP1, S_T_SP2 });
-        await newStudent.save();
-        res.status(201).json(newStudent);
-    } catch (err) {
-        console.error("Error adding student:", err);
-        res.status(500).send("Internal Server Error");
-    }
-});
+
 
 // PUT: Update a student by ID
 app.put("/students/:id", async (req, res) => {
@@ -293,8 +288,6 @@ app.delete("/students/:id", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
-
-
 
 app.post("/auth/login", async (req, res) => {
     let { username, password } = req.body;
@@ -356,7 +349,47 @@ app.post("/auth/info", async (req, res) => {
   }
 });
 
-
+app.post("/students", async (req, res) => {
+    try {
+      const newStudentData = { ...req.body };
+  
+      if (typeof newStudentData.S_id === "string") {
+        newStudentData.S_id = newStudentData.S_id.replace("s", "");
+      }
+  
+      const student = new Student(newStudentData);
+      const result = await student.save();
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating student:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // PUT: อัปเดตสถานะ S_status ของนักเรียน
+app.put("/students/:id/status", async (req, res) => {
+    try {
+      const studentId = req.params.id;
+      const { S_status } = req.body;
+  
+      // อัปเดตสถานะ S_status ในฐานข้อมูล
+      const updatedStudent = await Student.findOneAndUpdate(
+        { S_id: studentId },
+        { S_status },
+        { new: true }
+      );
+  
+      if (!updatedStudent) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+  
+      res.json(updatedStudent);
+    } catch (error) {
+      console.error("Error updating student status:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
 // -----------------------------------------------------------------
 //Teacher
 
@@ -366,13 +399,21 @@ const TeacherSchema = new mongoose.Schema({
     T_email: String,
     T_phone: String,
     T_position: String,
-});
+    T_account_type: String,
+    T_status: Boolean,
+  },
+  {
+    timestamps: false,
+    versionKey: false,
+  }
+);
 
 const Teacher = mongoose.model("Teacher", TeacherSchema);
 app.get("/Teacher", async (req, res) => {
     try {
-        const teacher = await Teacher.find();
-        res.json(teacher);
+        const teachers = await Teacher.find();
+        const result = await teachers.save();
+        res.json(result);
     } catch (err) {
         console.error("Error adding Teachert:", err);
         res.status(500).send("Internal Server Error");
@@ -564,5 +605,37 @@ app.post("/FilePDF", async (req, res) => {
 });
 
 
+// -----------------------------------------------------------------
+// -----------------------------------------------------------------
+
+
+const AdminSchema = new mongoose.Schema(
+    {
+      A_id: String,
+      A_name: String,
+      A_email: String,
+      A_account_type: String,
+      A_status: Boolean,
+    },
+    {
+      timestamps: false,
+      versionKey: false,
+    }
+  );
+  
+  const Admin = mongoose.model("Admin", AdminSchema);
+  
+  app.post("/Admin", async (req, res) => {
+    try {
+      const Admins = new Admin(newAdminData);
+      const result = await Admins.save();
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating student:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  
 // -----------------------------------------------------------------
 // -----------------------------------------------------------------
