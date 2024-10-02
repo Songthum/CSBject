@@ -457,14 +457,14 @@ const TeacherSchema = new mongoose.Schema({
 const Teacher = mongoose.model("Teacher", TeacherSchema);
 app.get("/Teacher", async (req, res) => {
     try {
-        const teachers = await Teacher.find();
-        const result = await teachers.save();
-        res.json(result);
+        const teachers = await Teacher.find();  // ค้นหาทุก teacher ในฐานข้อมูล
+        res.json(teachers);  // ส่งกลับผลลัพธ์ teachers เป็น JSON
     } catch (err) {
-        console.error("Error adding Teachert:", err);
-        res.status(500).send("Internal Server Error");
+        console.error("Error fetching teachers:", err);  // แสดงข้อผิดพลาดใน console
+        res.status(500).send("Internal Server Error");  // ส่ง status 500 เมื่อเกิดข้อผิดพลาด
     }
 });
+
 
 
 // -----------------------------------------------------------------
